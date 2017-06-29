@@ -11,10 +11,7 @@ import org.sola.common.ClaimStatusConstants;
 import org.sola.services.common.repository.AccessFunctions;
 import org.sola.services.common.repository.ChildEntity;
 import org.sola.services.common.repository.ChildEntityList;
-import org.sola.services.common.repository.RepositoryUtility;
 import org.sola.services.common.repository.entities.AbstractVersionedEntity;
-import org.sola.cs.services.ejb.system.br.Result;
-import org.sola.cs.services.ejb.system.businesslogic.SystemCSEJBLocal;
 
 @Table(schema = "opentenure", name = "claim")
 public class Claim extends AbstractVersionedEntity {
@@ -22,7 +19,7 @@ public class Claim extends AbstractVersionedEntity {
     @Id
     @Column(name = "id")
     private String id;
-    @Column(name = "nr", updatable = false)
+    @Column(name = "nr")
     private String nr;
     @Column(name = "start_date")
     private Date startDate;
@@ -99,7 +96,28 @@ public class Claim extends AbstractVersionedEntity {
     private String terminateTransaction;
     private List<Claim> parentClaims;
     private List<Claim> childClaims;
-
+    
+    @Column(name = "block_number")
+    private String blockNumber;
+    @Column(name = "has_constructions")
+    private boolean hasConstructions;
+    @Column(name = "construction_date")
+    private Date constructionDate;
+    @Column(name = "north_adjacency_type")
+    private String northAdjacencyTypeCode;
+    @Column(name = "south_adjacency_type")
+    private String southAdjacencyTypeCode;
+    @Column(name = "east_adjacency_type")
+    private String eastAdjacencyTypeCode;
+    @Column(name = "west_adjacency_type")
+    private String westAdjacencyTypeCode;    
+    @Column(name = "neighborhood")
+    private String neighborhood;
+    @Column(name = "land_project_code")
+    private String landProjectCode;
+    @Column(name = "commune_code")
+    private String communeCode;
+        
     public static final String PARAM_CHALLENGED_ID = "challengeId";
     public static final String PARAM_CLAIM_NUMBER = "claimNumber";
     public static final String PARAM_TRANSACTION = "transact";
@@ -427,29 +445,89 @@ public class Claim extends AbstractVersionedEntity {
         this.childClaims = childClaims;
     }
 
+    public String getBlockNumber() {
+        return blockNumber;
+    }
+
+    public void setBlockNumber(String blockNumber) {
+        this.blockNumber = blockNumber;
+    }
+
+    public boolean isHasConstructions() {
+        return hasConstructions;
+    }
+
+    public void setHasConstructions(boolean hasConstructions) {
+        this.hasConstructions = hasConstructions;
+    }
+
+    public Date getConstructionDate() {
+        return constructionDate;
+    }
+
+    public void setConstructionDate(Date constructionDate) {
+        this.constructionDate = constructionDate;
+    }
+
+    public String getNorthAdjacencyTypeCode() {
+        return northAdjacencyTypeCode;
+    }
+
+    public void setNorthAdjacencyTypeCode(String northAdjacencyTypeCode) {
+        this.northAdjacencyTypeCode = northAdjacencyTypeCode;
+    }
+
+    public String getSouthAdjacencyTypeCode() {
+        return southAdjacencyTypeCode;
+    }
+
+    public void setSouthAdjacencyTypeCode(String southAdjacencyTypeCode) {
+        this.southAdjacencyTypeCode = southAdjacencyTypeCode;
+    }
+
+    public String getEastAdjacencyTypeCode() {
+        return eastAdjacencyTypeCode;
+    }
+
+    public void setEastAdjacencyTypeCode(String eastAdjacencyTypeCode) {
+        this.eastAdjacencyTypeCode = eastAdjacencyTypeCode;
+    }
+
+    public String getWestAdjacencyTypeCode() {
+        return westAdjacencyTypeCode;
+    }
+
+    public void setWestAdjacencyTypeCode(String westAdjacencyTypeCode) {
+        this.westAdjacencyTypeCode = westAdjacencyTypeCode;
+    }
+
+    public String getNeighborhood() {
+        return neighborhood;
+    }
+
+    public void setNeighborhood(String neighborhood) {
+        this.neighborhood = neighborhood;
+    }
+
+    public String getLandProjectCode() {
+        return landProjectCode;
+    }
+
+    public void setLandProjectCode(String landProjectCode) {
+        this.landProjectCode = landProjectCode;
+    }
+
+    public String getCommuneCode() {
+        return communeCode;
+    }
+
+    public void setCommuneCode(String communeCode) {
+        this.communeCode = communeCode;
+    }
+
     public boolean getIsReadyForReview() {
         return getChallengeExpiryDate() != null && getStatusCode() != null
                 && getStatusCode().equalsIgnoreCase(ClaimStatusConstants.UNMODERATED)
                 && getChallengeExpiryDate().before(Calendar.getInstance().getTime());
-    }
-
-    private String generateNumber() {
-        String result = "";
-        SystemCSEJBLocal systemEJB = RepositoryUtility.tryGetEJB(SystemCSEJBLocal.class);
-        if (systemEJB != null) {
-            Result newNumberResult = systemEJB.checkRuleGetResultSingle("generate-claim-nr", null);
-            if (newNumberResult != null && newNumberResult.getValue() != null) {
-                result = newNumberResult.getValue().toString();
-            }
-        }
-        return result;
-    }
-
-    @Override
-    public void preSave() {
-        if (isNew()) {
-            setNr(generateNumber());
-        }
-        super.preSave();
     }
 }

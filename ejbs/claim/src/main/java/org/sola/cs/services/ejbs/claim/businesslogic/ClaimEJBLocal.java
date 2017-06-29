@@ -16,6 +16,7 @@ import org.sola.cs.services.ejbs.claim.entities.FormTemplate;
 import org.sola.cs.services.ejbs.claim.entities.LandUse;
 import org.sola.cs.services.ejbs.claim.entities.RejectionReason;
 import org.sola.cs.services.ejbs.claim.entities.Restriction;
+import org.sola.cs.services.ejbs.claim.entities.WorkflowStep;
 import org.sola.services.common.ejbs.AbstractEJBLocal;
 
 @Local
@@ -59,7 +60,6 @@ public interface ClaimEJBLocal extends AbstractEJBLocal {
     boolean canChallengeClaim(String claimId);
     boolean canRevertClaimReview(String claimId);
     boolean submitClaim(String claimId, String languageCode);
-    boolean canPrintClaimCertificate(String claimId, String languageCode);
     boolean canIssueClaim(String id);
     boolean canTransferClaim(String claimId);
     void addClaimAttachment(String claimId, String attachmentId);
@@ -73,10 +73,10 @@ public interface ClaimEJBLocal extends AbstractEJBLocal {
     List<FieldConstraintType> getFieldConstraintTypes(String languageCode);
     boolean checkFormTemplateHasPayload(String formName);
     boolean issueClaim(String claimId, String langaugeCode);
-    List<SourceType> getDocumentTypesForIssuance(String langaugeCode);
     Claim transferClaim(Claim claim, String languageCode);
     Claim registerMortgage(Claim claim, String languageCode);
     Restriction terminateRestriction(String restrictionId);
     void mergeClaims(List<Claim> oldClaims, Claim newClaim);
     void splitClaim(Claim oldClaim, List<Claim> newClaims);
+    List<WorkflowStep> getWorkflowSteps(String langCode);
 }

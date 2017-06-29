@@ -2,6 +2,7 @@ package org.sola.cs.services.ejb.refdata.businesslogic;
 
 import java.util.List;
 import javax.ejb.Local;
+import org.sola.cs.services.ejb.refdata.entities.Commune;
 import org.sola.services.common.ejbs.AbstractEJBLocal;
 import org.sola.services.common.repository.entities.AbstractCodeEntity;
 import org.sola.cs.services.ejb.refdata.entities.Language;
@@ -37,7 +38,7 @@ public interface RefDataCSEJBLocal extends AbstractEJBLocal {
     
     @Override
     <T extends AbstractCodeEntity> List<T> getCodeEntityList(Class<T> codeEntityClass, String lang);
-    
+        
     /** 
      * Saves {@link Language} object
      * @param lang Language object to save

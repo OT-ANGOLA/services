@@ -60,6 +60,7 @@ import org.sola.cs.services.ejbs.admin.businesslogic.AdminCSEJBLocal;
 import org.sola.cs.services.ejbs.admin.businesslogic.repository.entities.User;
 import org.sola.cs.services.ejbs.claim.entities.Restriction;
 import org.sola.cs.services.ejbs.claim.entities.TerminationReason;
+import org.sola.cs.services.ejbs.claim.entities.WorkflowStep;
 
 /**
  * Implements methods to manage the claim and it's related objects
@@ -342,9 +343,9 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
 
         boolean newClaim = claim.isNew();
         boolean fullValidation = true;
-        if (newClaim || claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.CREATED)) {
-            fullValidation = false;
-        }
+//        if (newClaim || claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.CREATED)) {
+//            fullValidation = false;
+//        }
 
         // Clean up claim geometry from Myanmar characters
         claim.setGpsGeometry(cleanupGeometry(claim.getGpsGeometry()));
@@ -389,32 +390,36 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
             claim.setVersion(claim.getVersion() + 1);
         }
 
-        if (!newClaim) {
-            // Get old claim
-            Claim oldClaim = getRepository().getEntity(Claim.class, claim.getId());
-            if (oldClaim != null) {
-                // Check challenge expiration date
-                if (oldClaim.getChallengeExpiryDate() != null && claim.getChallengeExpiryDate() != null
-                        && !oldClaim.getChallengeExpiryDate().equals(claim.getChallengeExpiryDate())) {
-                    // Allow change of expiration date only for unmoderated claims
-                    if (!oldClaim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.UNMODERATED)) {
-                        claim.setChallengeExpiryDate(oldClaim.getChallengeExpiryDate());
-                    } else {
-                        // Allow change of expiration date only for unmoderated claims and users with Reviewer/Moderator roles
-                        if (!isInRole(RolesConstants.CS_REVIEW_CLAIM, RolesConstants.CS_MODERATE_CLAIM)) {
-                            claim.setChallengeExpiryDate(oldClaim.getChallengeExpiryDate());
-                        }
-                        // Don't allow change of expiration date if it's already expired
-                        if (oldClaim.getChallengeExpiryDate().before(Calendar.getInstance().getTime())) {
-                            claim.setChallengeExpiryDate(oldClaim.getChallengeExpiryDate());
-                        }
-                    }
-                }
-            }
-        }
-
+//        if (!newClaim) {
+//            // Get old claim
+//            Claim oldClaim = getRepository().getEntity(Claim.class, claim.getId());
+//            if (oldClaim != null) {
+//                // Check challenge expiration date
+//                if (oldClaim.getChallengeExpiryDate() != null && claim.getChallengeExpiryDate() != null
+//                        && !oldClaim.getChallengeExpiryDate().equals(claim.getChallengeExpiryDate())) {
+//                    // Allow change of expiration date only for unmoderated claims
+//                    if (!oldClaim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.UNMODERATED)) {
+//                        claim.setChallengeExpiryDate(oldClaim.getChallengeExpiryDate());
+//                    } else {
+//                        // Allow change of expiration date only for unmoderated claims and users with Reviewer/Moderator roles
+//                        if (!isInRole(RolesConstants.CS_REVIEW_CLAIM, RolesConstants.CS_MODERATE_CLAIM)) {
+//                            claim.setChallengeExpiryDate(oldClaim.getChallengeExpiryDate());
+//                        }
+//                        // Don't allow change of expiration date if it's already expired
+//                        if (oldClaim.getChallengeExpiryDate().before(Calendar.getInstance().getTime())) {
+//                            claim.setChallengeExpiryDate(oldClaim.getChallengeExpiryDate());
+//                        }
+//                    }
+//                }
+//            }
+//        }
         // Save claim
         claim = getRepository().saveEntity(claim);
+
+        // If new claim, submit it
+        if (newClaim && (StringUtility.isEmpty(claim.getStatusCode()) || StringUtility.empty(claim.getStatusCode()).equalsIgnoreCase(ClaimStatusConstants.CREATED))) {
+            changeClaimStatus(claim.getId(), null, ClaimStatusConstants.UNMODERATED, null);
+        }
 
         // Clean up chunks just in case
         deleteClaimChunks(claim.getId());
@@ -987,31 +992,6 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
     }
 
     @Override
-    public List<SourceType> getDocumentTypesForIssuance(String langaugeCode) {
-        String docTypesString = systemEjb.getSetting(ConfigConstants.DOCUMENTS_FOR_ISSUING_CCO, "");
-        List<SourceType> docTypes = new ArrayList<SourceType>();
-
-        if (!StringUtility.isEmpty(docTypesString)) {
-            String[] docTypeCodes = docTypesString.replace(" ", "").split(",");
-            if (docTypeCodes != null && docTypeCodes.length > 0) {
-
-                List<SourceType> allDocTypes = refDataEjb.getCodeEntityList(SourceType.class, langaugeCode);
-
-                if (allDocTypes != null && allDocTypes.size() > 0) {
-                    for (SourceType docType : allDocTypes) {
-                        for (String docTypeCode : docTypeCodes) {
-                            if (docType.getCode().equalsIgnoreCase(docTypeCode)) {
-                                docTypes.add(docType);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return docTypes;
-    }
-
-    @Override
     @RolesAllowed({RolesConstants.CS_MODERATE_CLAIM, RolesConstants.CS_PRINT_CERTIFICATE})
     public boolean issueClaim(String claimId, final String langaugeCode) {
         if (StringUtility.isEmpty(claimId)) {
@@ -1020,40 +1000,6 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
 
         Claim claim = getRepository().getEntity(Claim.class, claimId);
         canIssueClaim(claim, true);
-
-        // Check documents 
-        List<SourceType> docTypes = getDocumentTypesForIssuance(langaugeCode);
-
-        if (docTypes.size() > 0) {
-            String missingDocs = "";
-
-            for (SourceType docType : docTypes) {
-                boolean found = false;
-
-                if (claim.getAttachments() != null && claim.getAttachments().size() > 0) {
-                    for (Attachment attach : claim.getAttachments()) {
-                        if (!StringUtility.isEmpty(attach.getTypeCode()) && attach.getTypeCode().equalsIgnoreCase(docType.getCode())) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!found) {
-                    // Get missing document type for error
-                    if (missingDocs.length() > 0) {
-                        missingDocs += ", ";
-                    }
-                    missingDocs += docType.getDisplayValue();
-                }
-            }
-
-            if (missingDocs.length() > 0) {
-                // Throw error
-                throw new SOLAException(ServiceMessage.OT_WS_CLAIM_CANT_ISSUE_FOUND_MISSING_DOCS, new Object[]{missingDocs});
-            }
-        }
-
         return changeClaimStatus(claimId, null, ClaimStatusConstants.ISSUED, null);
     }
 
@@ -1519,15 +1465,6 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
             return false;
         }
 
-        // Check expiration time and forbid withdrawal if expired
-        if (claim.getChallengeExpiryDate() != null
-                && claim.getChallengeExpiryDate().before(Calendar.getInstance().getTime())) {
-            if (throwException) {
-                throw new SOLAException(ServiceMessage.OT_WS_CLAIM_MODERATION_EXPIRED);
-            }
-            return false;
-        }
-
         // Check claim status
         if (!claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.UNMODERATED)) {
             if (throwException) {
@@ -1739,31 +1676,6 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
     }
 
     @Override
-    public boolean canPrintClaimCertificate(String claimId, String languageCode) {
-        return canPrintClaimCertificate(getRepository().getEntity(Claim.class, claimId), false);
-
-    }
-
-    private boolean canPrintClaimCertificate(Claim claim, boolean throwException) {
-        if (claim == null) {
-            if (throwException) {
-                throw new SOLAException(ServiceMessage.OT_WS_CLAIM_NOT_FOUND);
-            }
-            return false;
-        }
-
-        if (claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.MODERATED)
-                && isInRole(RolesConstants.CS_REVIEW_CLAIM, RolesConstants.CS_PRINT_CERTIFICATE)) {
-            return true;
-        } else {
-            if (throwException) {
-                throw new SOLAException(ServiceMessage.OT_WS_CLAIM_CERT_PRINT_NOT_ALLOWED);
-            }
-            return false;
-        }
-    }
-
-    @Override
     public boolean canEditClaim(String claimId) {
         return canEditClaim(getRepository().getEntity(Claim.class, claimId), false);
     }
@@ -1864,21 +1776,21 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
             if (challengedClaim != null) {
                 claimStatusChanger.setChallengeExpiryDate(challengedClaim.getChallengeExpiryDate());
             } else {
-                String challengeExpiryDateString = systemEjb.getSetting(ConfigConstants.MODERATION_DATE, "");
-                Date challengeExpiryDate = null;
-
-                if (!StringUtility.isEmpty(challengeExpiryDateString)) {
-                    challengeExpiryDate = DateUtility.convertToDate(challengeExpiryDateString, "yyyy-MM-dd");
-                }
-
-                if (challengeExpiryDate != null && challengeExpiryDate.after(Calendar.getInstance().getTime())) {
-                    claimStatusChanger.setChallengeExpiryDate(challengeExpiryDate);
-                } else {
-                    int days = Integer.parseInt(systemEjb.getSetting(ConfigConstants.MODERATION_DAYS, "30"));
-                    Calendar cal = Calendar.getInstance();
-                    cal.add(Calendar.DATE, days);
-                    claimStatusChanger.setChallengeExpiryDate(cal.getTime());
-                }
+//                String challengeExpiryDateString = systemEjb.getSetting(ConfigConstants.MODERATION_DATE, "");
+//                Date challengeExpiryDate = null;
+//
+//                if (!StringUtility.isEmpty(challengeExpiryDateString)) {
+//                    challengeExpiryDate = DateUtility.convertToDate(challengeExpiryDateString, "yyyy-MM-dd");
+//                }
+//
+//                if (challengeExpiryDate != null && challengeExpiryDate.after(Calendar.getInstance().getTime())) {
+//                    claimStatusChanger.setChallengeExpiryDate(challengeExpiryDate);
+//                } else {
+//                    int days = Integer.parseInt(systemEjb.getSetting(ConfigConstants.MODERATION_DAYS, "30"));
+//                    Calendar cal = Calendar.getInstance();
+//                    cal.add(Calendar.DATE, days);
+//                    claimStatusChanger.setChallengeExpiryDate(cal.getTime());
+//                }
             }
         }
 
@@ -1892,6 +1804,7 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
 
         if (statusCode.equalsIgnoreCase(ClaimStatusConstants.ISSUED)) {
             claimStatusChanger.setIssuanceDate(Calendar.getInstance().getTime());
+            claimStatusChanger.setAssigneeName(null);
         }
 
         claimStatusChanger.setStatusCode(statusCode);
@@ -2241,7 +2154,7 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
         }
 
         // Check claim status
-        if (!claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.MODERATED)) {
+        if (!claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.ISSUED)) {
             if (throwException) {
                 throw new SOLAException(ServiceMessage.OT_WS_CLAIM_CANT_TRANSFER);
             }
@@ -2340,26 +2253,47 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
             return false;
         }
 
-        // Forbid adding documents for historic claims
-        if (claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.HISTORIC)) {
+        // Don't allow adding documents to the claims which don't have status of created, unmoderated, reviewed or moderated
+        if (!claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.CREATED)
+                && !claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.UNMODERATED)
+                && !claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.REVIEWED)
+                && !claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.MODERATED)) {
             if (throwException) {
                 throw new SOLAException(ServiceMessage.OT_WS_CLAIM_IS_READ_ONLY);
             }
             return false;
         }
 
-        // Check claim status and ownership
-        if (canIssueClaim(claim, throwException)) {
-            return true;
-        }
-
-        if (!claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.UNMODERATED)
-                || !StringUtility.empty(claim.getRecorderName()).equalsIgnoreCase(getUserName())) {
+        // Don't allow adding documents to the reviewed and moderated claims if user not in role CS_MODERATE_CLAIM
+        if ((claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.MODERATED)
+                || claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.REVIEWED))
+                && !isInRole(RolesConstants.CS_MODERATE_CLAIM)) {
             if (throwException) {
                 throw new SOLAException(ServiceMessage.EXCEPTION_INSUFFICIENT_RIGHTS);
             }
             return false;
         }
+
+        // Don't allow adding documents to the created and unmoderated claims if user not an owner of the claim or its assignee
+        if ((claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.UNMODERATED)
+                || claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.CREATED))
+                && (!StringUtility.empty(claim.getRecorderName()).equalsIgnoreCase(getUserName())
+                || !StringUtility.empty(claim.getAssigneeName()).equalsIgnoreCase(getUserName()))) {
+            if (throwException) {
+                throw new SOLAException(ServiceMessage.EXCEPTION_INSUFFICIENT_RIGHTS);
+            }
+            return false;
+        }
+        
+        // Don't allow adding documents to the reviewed claims if user is not assigned to it
+        if (claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.REVIEWED)
+                && !StringUtility.empty(claim.getAssigneeName()).equalsIgnoreCase(getUserName())) {
+            if (throwException) {
+                throw new SOLAException(ServiceMessage.EXCEPTION_INSUFFICIENT_RIGHTS);
+            }
+            return false;
+        }
+
         return true;
     }
 
@@ -2502,7 +2436,6 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
         permissions.setCanSubmitClaim(canSubmitClaim(claim, false));
         permissions.setCanChallengeClaim(canChallengeClaim(claim, false));
         permissions.setCanRevert(canRevertClaimReview(claim, false));
-        permissions.setCanPrintCertificate(canPrintClaimCertificate(claim, false));
         permissions.setCanIssue(canIssueClaim(claim, false));
         permissions.setCanTransfer(canTransferClaim(claim, false));
         return permissions;
@@ -2580,5 +2513,14 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
     @Override
     public List<FieldConstraintType> getFieldConstraintTypes(String languageCode) {
         return getRepository().getCodeList(FieldConstraintType.class, languageCode);
+    }
+
+    @Override
+    public List<WorkflowStep> getWorkflowSteps(String langCode) {
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        if (langCode != null) {
+            params.put(CommonSqlProvider.PARAM_LANGUAGE_CODE, langCode);
+        }
+        return getRepository().getEntityList(WorkflowStep.class, params);
     }
 }

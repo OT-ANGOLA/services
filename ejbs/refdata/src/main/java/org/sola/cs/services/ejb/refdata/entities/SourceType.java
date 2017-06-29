@@ -40,6 +40,13 @@ import org.sola.services.common.repository.entities.AbstractCodeEntity;
 @DefaultSorter(sortString="display_value")
 public class SourceType extends AbstractCodeEntity {
 
+    public static final String CODE_LIC_EXTENTION = "ldam";
+    public static final String CODE_LIC_CONSTRUCTION = "ldcn";
+    public static final String CODE_LIC_CONSTRUCTION_BY_PROVINCE = "ldcnp";
+    public static final String CODE_LEASE_DOCUMENT = "cdt";
+    public static final String CODE_LIC_DEMOLISH = "lddl";
+    public static final String CODE_LIC_REHABILITATION = "ldrb";
+    
     @Column(name = "is_for_registration")
     private boolean  forRegistration;
 

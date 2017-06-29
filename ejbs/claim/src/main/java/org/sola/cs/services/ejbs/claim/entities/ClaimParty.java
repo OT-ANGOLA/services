@@ -36,6 +36,31 @@ public class ClaimParty extends AbstractVersionedEntity {
     @Column(name="is_person")
     private boolean person;
     
+    @Column(name = "other_name")
+    private String otherName;
+    @Column(name = "father_name")
+    private String fatherName;
+    @Column(name = "mother_name")
+    private String motherName;
+    @Column(name = "id_issuance_date")
+    private Date idIssuanceDate;
+    @Column(name = "id_issuance_country")
+    private String idIssuanceCountryCode;
+    @Column(name = "id_issuance_province")
+    private String idIssuanceProvinceCode;
+    @Column(name = "birth_country_code")
+    private String birthCountryCode;
+    @Column(name = "birth_commune_code")
+    private String birthCommuneCode;
+    @Column(name = "residence_commune_code")
+    private String residenceCommuneCode;
+    @Column(name = "beneficiary_name")
+    private String beneficiaryName;
+    @Column(name = "beneficiary_id_number")
+    private String beneficiaryIdNumber;
+    @Column(name = "marital_status_code")
+    private String maritalStatusCode;
+    
     public ClaimParty(){
         super();
     }
@@ -142,5 +167,101 @@ public class ClaimParty extends AbstractVersionedEntity {
 
     public void setPerson(boolean person) {
         this.person = person;
+    }
+
+    public String getOtherName() {
+        return otherName;
+    }
+
+    public void setOtherName(String otherName) {
+        this.otherName = otherName;
+    }
+
+    public String getFatherName() {
+        return fatherName;
+    }
+
+    public void setFatherName(String fatherName) {
+        this.fatherName = fatherName;
+    }
+
+    public String getMotherName() {
+        return motherName;
+    }
+
+    public void setMotherName(String motherName) {
+        this.motherName = motherName;
+    }
+
+    public Date getIdIssuanceDate() {
+        return idIssuanceDate;
+    }
+
+    public void setIdIssuanceDate(Date idIssuanceDate) {
+        this.idIssuanceDate = idIssuanceDate;
+    }
+
+    public String getIdIssuanceCountryCode() {
+        return idIssuanceCountryCode;
+    }
+
+    public void setIdIssuanceCountryCode(String idIssuanceCountryCode) {
+        this.idIssuanceCountryCode = idIssuanceCountryCode;
+    }
+
+    public String getIdIssuanceProvinceCode() {
+        return idIssuanceProvinceCode;
+    }
+
+    public void setIdIssuanceProvinceCode(String idIssuanceProvinceCode) {
+        this.idIssuanceProvinceCode = idIssuanceProvinceCode;
+    }
+
+    public String getBirthCountryCode() {
+        return birthCountryCode;
+    }
+
+    public void setBirthCountryCode(String birthCountryCode) {
+        this.birthCountryCode = birthCountryCode;
+    }
+
+    public String getBirthCommuneCode() {
+        return birthCommuneCode;
+    }
+
+    public void setBirthCommuneCode(String birthCommuneCode) {
+        this.birthCommuneCode = birthCommuneCode;
+    }
+
+    public String getResidenceCommuneCode() {
+        return residenceCommuneCode;
+    }
+
+    public void setResidenceCommuneCode(String residenceCommuneCode) {
+        this.residenceCommuneCode = residenceCommuneCode;
+    }
+
+    public String getBeneficiaryName() {
+        return beneficiaryName;
+    }
+
+    public void setBeneficiaryName(String beneficiaryName) {
+        this.beneficiaryName = beneficiaryName;
+    }
+
+    public String getBeneficiaryIdNumber() {
+        return beneficiaryIdNumber;
+    }
+
+    public void setBeneficiaryIdNumber(String beneficiaryIdNumber) {
+        this.beneficiaryIdNumber = beneficiaryIdNumber;
+    }
+
+    public String getMaritalStatusCode() {
+        return maritalStatusCode;
+    }
+
+    public void setMaritalStatusCode(String maritalStatusCode) {
+        this.maritalStatusCode = maritalStatusCode;
     }
 }
