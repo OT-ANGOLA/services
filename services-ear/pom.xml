@@ -199,7 +199,7 @@
         <dependency>
             <groupId>org.fao.sola.admin.clients.web</groupId>
             <artifactId>sola-admin-clients-web</artifactId>
-            <version>0.1-1706</version>
+            <version>1504a</version>
             <type>war</type>
         </dependency>
          <dependency>
