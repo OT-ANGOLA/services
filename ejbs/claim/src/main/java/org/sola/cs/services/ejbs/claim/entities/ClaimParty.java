@@ -48,6 +48,10 @@ public class ClaimParty extends AbstractVersionedEntity {
     private String idIssuanceCountryCode;
     @Column(name = "id_issuance_province")
     private String idIssuanceProvinceCode;
+    @Column(name = "id_issuance_municipality")
+    private String idIssuanceMunicipalityCode;
+    @Column(name = "id_issuance_commune")
+    private String idIssuanceCommuneCode;
     @Column(name = "birth_country_code")
     private String birthCountryCode;
     @Column(name = "birth_commune_code")
@@ -215,6 +219,22 @@ public class ClaimParty extends AbstractVersionedEntity {
 
     public void setIdIssuanceProvinceCode(String idIssuanceProvinceCode) {
         this.idIssuanceProvinceCode = idIssuanceProvinceCode;
+    }
+
+    public String getIdIssuanceMunicipalityCode() {
+        return idIssuanceMunicipalityCode;
+    }
+
+    public void setIdIssuanceMunicipalityCode(String idIssuanceMunicipalityCode) {
+        this.idIssuanceMunicipalityCode = idIssuanceMunicipalityCode;
+    }
+
+    public String getIdIssuanceCommuneCode() {
+        return idIssuanceCommuneCode;
+    }
+
+    public void setIdIssuanceCommuneCode(String idIssuanceCommuneCode) {
+        this.idIssuanceCommuneCode = idIssuanceCommuneCode;
     }
 
     public String getBirthCountryCode() {
