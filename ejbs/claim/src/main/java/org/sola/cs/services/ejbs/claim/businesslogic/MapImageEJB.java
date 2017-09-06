@@ -124,6 +124,7 @@ public class MapImageEJB extends AbstractEJB implements MapImageEJBLocal {
 
             SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
             SimpleFeatureTypeBuilder builderDimension = new SimpleFeatureTypeBuilder();
+            SimpleFeatureTypeBuilder builderCoords = new SimpleFeatureTypeBuilder();
 
             builder.setName("parcel");
             builder.setCRS(crs);
@@ -132,10 +133,16 @@ public class MapImageEJB extends AbstractEJB implements MapImageEJBLocal {
             builderDimension.setCRS(crs);
             //builder.setCRS(CRS.decode("EPSG:" + crs));
 
+            builderCoords.setName("coords");
+            builderCoords.setCRS(crs);
+
             // add attributes in order
             builder.add("geom", Polygon.class);
             builder.length(25).add("label", String.class);
             builder.add("target", Boolean.class);
+
+            builderCoords.add("geom", LineString.class);
+            builderCoords.length(25).add("label", String.class);
 
             builderDimension.add("geom", LineString.class);
             builderDimension.length(25).add("label", String.class);
@@ -143,9 +150,11 @@ public class MapImageEJB extends AbstractEJB implements MapImageEJBLocal {
             // build the type
             final SimpleFeatureType TYPE = builder.buildFeatureType();
             final SimpleFeatureType TYPE_DIMENTION = builderDimension.buildFeatureType();
+            final SimpleFeatureType TYPE_COORDS = builderCoords.buildFeatureType();
 
             DefaultFeatureCollection claimFeatures = new DefaultFeatureCollection("parcels", TYPE);
             DefaultFeatureCollection claimDimentions = new DefaultFeatureCollection("dimensions", TYPE_DIMENTION);
+            DefaultFeatureCollection claimCoords = new DefaultFeatureCollection("coords", TYPE_COORDS);
 
             WKTReader2 wkt = new WKTReader2();
             SimpleFeature mainClaim = null;
@@ -158,16 +167,15 @@ public class MapImageEJB extends AbstractEJB implements MapImageEJBLocal {
             }
 
             for (ClaimSpatial claim : claims) {
-                String claimLabel = claim.getNr();
+                String claimLabel = claim.getPlotNumber();
 
-                if (claim.isTarget()) {
-                    if (claim.getClaimArea() >= 10000) {
-                        claimLabel = Double.toString(NumberUtility.roundDouble((double) claim.getClaimArea() / 10000, 4)) + "ha";
-                    } else {
-                        claimLabel = Long.toString(claim.getClaimArea()) + "m2";
-                    }
-                }
-
+//                if (claim.isTarget()) {
+//                    if (claim.getClaimArea() >= 10000) {
+//                        claimLabel = Double.toString(NumberUtility.roundDouble((double) claim.getClaimArea() / 10000, 4)) + "ha";
+//                    } else {
+//                        claimLabel = Long.toString(claim.getClaimArea()) + "m2";
+//                    }
+//                }
                 SimpleFeature claimFeature = SimpleFeatureBuilder.build(TYPE, new Object[]{
                     wkt.read(claim.getGeom()), claimLabel, claim.isTarget()}, claim.getId());
                 claimFeatures.add(claimFeature);
@@ -184,6 +192,20 @@ public class MapImageEJB extends AbstractEJB implements MapImageEJBLocal {
                                 },
                                 Integer.toString(i)
                         ));
+                        claimCoords.add(SimpleFeatureBuilder.build(
+                                TYPE_COORDS,
+                                new Object[]{
+                                    wkt.read(String.format("POINT(%s %s)", points[i].x, points[i].y)),
+                                    i + 1
+                                },
+//                                new Object[]{
+//                                    wkt.read(String.format("POINT(%s %s)", points[i].x, points[i].y)),
+//                                    "(" + (i + 1) + ") \nE "
+//                                    + NumberUtility.roundDouble(points[i].x, 2) + "\nN "
+//                                    + NumberUtility.roundDouble(points[i].y, 2)
+//                                },
+                                Integer.toString(i)
+                        ));
                     }
                 }
             }
@@ -198,7 +220,15 @@ public class MapImageEJB extends AbstractEJB implements MapImageEJBLocal {
             SLDParser stylereader;
             URL sldURL;
 
-            // Add dementions layer first
+            // Add coordinates layer
+            sldURL = MapImageEJB.class.getResource(resourcesPath + "target_parcel_node.xml");
+            stylereader = new SLDParser(styleFactory, sldURL);
+            Style sldCoordsStyle = stylereader.readXML()[0];
+
+            Layer coordsLayer = new FeatureLayer(DataUtilities.source(claimCoords), sldCoordsStyle);
+            map.addLayer(coordsLayer);
+            
+            // Add dementions layer
             sldURL = MapImageEJB.class.getResource(resourcesPath + "target_parcel_sides.xml");
             stylereader = new SLDParser(styleFactory, sldURL);
             Style sldDimentionStyle = stylereader.readXML()[0];
@@ -228,7 +258,6 @@ public class MapImageEJB extends AbstractEJB implements MapImageEJBLocal {
             double minY = env.getMinY() - deltaY;
             double maxY = env.getMaxY() + deltaY;
 
-           
             if (imageRatio != mapRatio) {
                 if (imageRatio < mapRatio) {
                     double newMapWidth = env.getHeight() / imageRatio;

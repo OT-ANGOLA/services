@@ -477,6 +477,31 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
             }
         }
 
+        // Claim number
+        if (!StringUtility.isEmpty(claim.getNr())) {
+            if (claim.isNew()) {
+                try {
+                    int claimNumber = Integer.parseInt(claim.getNr());
+                    if (claimNumber > 399) {
+                        if (throwException) {
+                            throw new SOLAException(ServiceMessage.OT_WS_MANULA_CLAIM_NUMBER_LESS_400);
+                        } else {
+                            return false;
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                }
+            }
+            Claim c = getClaimByNumber(claim.getNr());
+            if (c != null && !c.getId().equalsIgnoreCase(claim.getId())) {
+                if (throwException) {
+                    throw new SOLAException(ServiceMessage.OT_WS_CLAIM_NUMBER_EXISTS);
+                } else {
+                    return false;
+                }
+            }
+        }
+
         String requireSpatial = systemEjb.getSetting(ConfigConstants.REQUIRES_SPATIAL, "1");
 
         if (fullValidation && requireSpatial.equals("1")
@@ -650,8 +675,7 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
                 if (attch == null) {
                     missingAttachments.add(claimAttch.getId());
                 } else // Check user name on attachment
-                {
-                    if (!canEditOtherClaims && !attch.getUserName().equalsIgnoreCase(userName)
+                 if (!canEditOtherClaims && !attch.getUserName().equalsIgnoreCase(userName)
                             && !attch.getUserName().equalsIgnoreCase(challengedClaimUser)) {
                         if (throwException) {
                             throw new SOLAException(ServiceMessage.EXCEPTION_OBJECT_ACCESS_RIGHTS);
@@ -659,7 +683,6 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
                             return false;
                         }
                     }
-                }
             }
 
             if (missingAttachments.size() > 0) {
@@ -2284,7 +2307,7 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
             }
             return false;
         }
-        
+
         // Don't allow adding documents to the reviewed claims if user is not assigned to it
         if (claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.REVIEWED)
                 && !StringUtility.empty(claim.getAssigneeName()).equalsIgnoreCase(getUserName())) {
@@ -2383,12 +2406,10 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
         if (attch == null) {
             throw new SOLAException(ServiceMessage.OT_WS_MISSING_SERVER_ATTACHMENTS);
         } else // Check user name on attachment
-        {
-            if (!isInRole(RolesConstants.CS_REVIEW_CLAIM, RolesConstants.CS_MODERATE_CLAIM, RolesConstants.CS_PRINT_CERTIFICATE)
+         if (!isInRole(RolesConstants.CS_REVIEW_CLAIM, RolesConstants.CS_MODERATE_CLAIM, RolesConstants.CS_PRINT_CERTIFICATE)
                     && !attch.getUserName().equalsIgnoreCase(getUserName())) {
                 throw new SOLAException(ServiceMessage.EXCEPTION_OBJECT_ACCESS_RIGHTS);
             }
-        }
 
         // Incraese claim row version by save without changes. This is required 
         // to indicate that there are changes on the claim in general

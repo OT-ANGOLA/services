@@ -15,7 +15,7 @@ public class ClaimSpatial extends AbstractReadOnlyEntity {
             + "  select st_astext(st_buffer(mapped_geometry, 0.0001)) as geom "
             + "  from opentenure.claim where id =#{ " + PARAM_CLAIM_ID + "} and mapped_geometry is not null "
             + ") "
-            + "select id, nr, status_code, claim_area, "
+            + "select id, nr, plot_number, status_code, claim_area, "
             + "st_astext(case when coalesce(#{ " + PARAM_CUSTOM_SRID + "},0) = 0 then mapped_geometry else st_transform(st_setsrid(mapped_geometry,4326),#{ " + PARAM_CUSTOM_SRID + "}) end) as geom, "
             + "(case when id =#{ " + PARAM_CLAIM_ID + "} then true else false end) as target "
             + "from opentenure.claim "
@@ -29,6 +29,9 @@ public class ClaimSpatial extends AbstractReadOnlyEntity {
     private String statusCode;
     @Column(name="claim_area")
     private long claimArea;
+    @Column(name="plot_number")
+    private String plotNumber;
+    
     @Column
     private boolean target;
     @Column
@@ -51,6 +54,14 @@ public class ClaimSpatial extends AbstractReadOnlyEntity {
 
     public void setNr(String nr) {
         this.nr = nr;
+    }
+
+    public String getPlotNumber() {
+        return plotNumber;
+    }
+
+    public void setPlotNumber(String plotNumber) {
+        this.plotNumber = plotNumber;
     }
 
     public long getClaimArea() {

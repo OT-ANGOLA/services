@@ -35,11 +35,13 @@ public class ClaimSearchResult extends AbstractReadOnlyEntity {
     private int version;
     @Column(name = "geom")
     private String geom;
+    @Column(name = "plot_number")
+    private String plotNumber;
     
     public static final String PARAM_NAME = "claimantName";
     public static final String PARAM_USERNAME = "userName";
     public static final String PARAM_CLAIM_NUMBER = "claimNumber";
-    public static final String PARAM_DESCRIPTION = "claimDescription";
+    public static final String PARAM_PLOT_NUMBER = "plotNumber";
     public static final String PARAM_STATUS_CODE = "statusCode";
     public static final String PARAM_DATE_FROM = "dateFrom";
     public static final String PARAM_DATE_TO = "dateTo";
@@ -48,7 +50,7 @@ public class ClaimSearchResult extends AbstractReadOnlyEntity {
     public static final String PARAM_POINT = "pointParam";
     private static final String SELECT_PART = 
             "select c.id, c.nr, c.lodgement_date, c.claim_area, c.challenge_expiry_date, c.decision_date, c.description, \n"
-            + "ST_AsText(c.mapped_geometry) as geom, "
+            + "ST_AsText(c.mapped_geometry) as geom, c.plot_number, "
             + "c.claimant_id, (p.name || ' ' || coalesce(p.last_name, '')) as claimant_name,\n"
             + "c.challenged_claim_id, c.status_code, c.rowversion, get_translation(cs.display_value, #{" 
             + CommonSqlProvider.PARAM_LANGUAGE_CODE + "}) as status_name\n"
@@ -77,7 +79,7 @@ public class ClaimSearchResult extends AbstractReadOnlyEntity {
     
     public static final String QUERY_SEARCH = SELECT_PART
             + "where position(lower(#{" + PARAM_NAME + "}) in lower(p.name || ' ' || COALESCE(p.last_name, ''))) > 0 and\n"
-            + "position(lower(#{" + PARAM_DESCRIPTION + "}) in lower(COALESCE(c.description, ''))) > 0 and \n"
+            + "position(lower(#{" + PARAM_PLOT_NUMBER + "}) in lower(COALESCE(c.plot_number, ''))) > 0 and \n"
             + "position(lower(#{" + PARAM_CLAIM_NUMBER + "}) in lower(COALESCE(c.nr, ''))) > 0 and \n"
             + "(c.status_code = #{" + PARAM_STATUS_CODE + "} or #{" + PARAM_STATUS_CODE + "} = '') and \n"
             + "((c.lodgement_date between #{" + PARAM_DATE_FROM + "}::timestamp and #{" + PARAM_DATE_TO + "}::timestamp) \n"
@@ -200,5 +202,13 @@ public class ClaimSearchResult extends AbstractReadOnlyEntity {
 
     public void setGeom(String geom) {
         this.geom = geom;
+    }
+
+    public String getPlotNumber() {
+        return plotNumber;
+    }
+
+    public void setPlotNumber(String plotNumber) {
+        this.plotNumber = plotNumber;
     }
 }

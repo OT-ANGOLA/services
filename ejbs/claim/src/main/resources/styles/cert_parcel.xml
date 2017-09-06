@@ -16,7 +16,7 @@
                     </Filter>
                     <PolygonSymbolizer>
                         <Stroke>
-                            <CssParameter name="stroke">#000000</CssParameter>
+                            <CssParameter name="stroke">#ff0000</CssParameter>
                             <CssParameter name="stroke-width">2</CssParameter>
                         </Stroke>
                     </PolygonSymbolizer>

@@ -19,8 +19,6 @@
                             <Size>8</Size>
                         </Graphic>
                     </PointSymbolizer>
-                </Rule>
-                <Rule>
                     <TextSymbolizer> 
                         <Label>
                             <ogc:PropertyName>label</ogc:PropertyName>

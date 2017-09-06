@@ -5,7 +5,7 @@ import org.sola.services.common.repository.entities.AbstractReadOnlyEntity;
 
 public class ClaimSearchParams extends AbstractReadOnlyEntity {
     
-    String description;
+    String plotNumber;
     String claimantName;
     String statusCode;
     String languageCode;
@@ -18,12 +18,12 @@ public class ClaimSearchParams extends AbstractReadOnlyEntity {
         super();
     }
 
-    public String getDescription() {
-        return description;
+    public String getPlotNumber() {
+        return plotNumber;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setPlotNumber(String description) {
+        this.plotNumber = description;
     }
 
     public String getClaimNumber() {

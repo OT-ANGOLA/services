@@ -1019,7 +1019,7 @@ public class SearchCSEJB extends AbstractEJB implements SearchCSEJBLocal {
             searchParams.setLodgementDateFrom(DateUtility.minimizeDate(searchParams.getLodgementDateFrom()));
             searchParams.setLodgementDateTo(DateUtility.maximizeDate(searchParams.getLodgementDateTo()));
         }
-        searchParams.setDescription(StringUtility.empty(searchParams.getDescription()));
+        searchParams.setPlotNumber(StringUtility.empty(searchParams.getPlotNumber()));
         searchParams.setClaimNumber(StringUtility.empty(searchParams.getClaimNumber()));
         searchParams.setClaimantName(StringUtility.empty(searchParams.getClaimantName()));
         searchParams.setStatusCode(StringUtility.empty(searchParams.getStatusCode()));
@@ -1030,7 +1030,7 @@ public class SearchCSEJB extends AbstractEJB implements SearchCSEJBLocal {
         params.put(CommonSqlProvider.PARAM_LANGUAGE_CODE, searchParams.getLanguageCode());
         params.put(ClaimSearchResult.PARAM_DATE_FROM, searchParams.getLodgementDateFrom());
         params.put(ClaimSearchResult.PARAM_DATE_TO, searchParams.getLodgementDateTo());
-        params.put(ClaimSearchResult.PARAM_DESCRIPTION, searchParams.getDescription());
+        params.put(ClaimSearchResult.PARAM_PLOT_NUMBER, searchParams.getPlotNumber());
         params.put(ClaimSearchResult.PARAM_CLAIM_NUMBER, searchParams.getClaimNumber());
         params.put(ClaimSearchResult.PARAM_NAME, searchParams.getClaimantName());
         params.put(ClaimSearchResult.PARAM_SEARCH_BY_USER, searchParams.isSearchByUser());
