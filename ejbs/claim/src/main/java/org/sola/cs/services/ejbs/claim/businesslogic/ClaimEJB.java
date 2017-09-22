@@ -11,6 +11,7 @@ import java.util.UUID;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.faces.application.FacesMessage;
 import org.sola.common.ClaimStatusConstants;
 import org.sola.common.ConfigConstants;
 import org.sola.common.DateUtility;
@@ -343,9 +344,9 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
 
         boolean newClaim = claim.isNew();
         boolean fullValidation = true;
-//        if (newClaim || claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.CREATED)) {
-//            fullValidation = false;
-//        }
+        if (newClaim || claim.getStatusCode().equalsIgnoreCase(ClaimStatusConstants.CREATED)) {
+            fullValidation = false;
+        }
 
         // Clean up claim geometry from Myanmar characters
         claim.setGpsGeometry(cleanupGeometry(claim.getGpsGeometry()));
@@ -418,7 +419,7 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
 
         // If new claim, submit it
         if (newClaim && (StringUtility.isEmpty(claim.getStatusCode()) || StringUtility.empty(claim.getStatusCode()).equalsIgnoreCase(ClaimStatusConstants.CREATED))) {
-            changeClaimStatus(claim.getId(), null, ClaimStatusConstants.UNMODERATED, null);
+            changeClaimStatus(claim.getId(), null, ClaimStatusConstants.CREATED, null);
         }
 
         // Clean up chunks just in case
@@ -526,6 +527,39 @@ public class ClaimEJB extends AbstractEJB implements ClaimEJBLocal {
         if (fullValidation && StringUtility.isEmpty(claim.getLandUseCode())) {
             if (throwException) {
                 throw new SOLAException(ServiceMessage.OT_WS_CLAIM_LAND_USE_REQUIERD);
+            } else {
+                return false;
+            }
+        }
+        
+        // North adjacency 
+        if (fullValidation && (StringUtility.isEmpty(claim.getNorthAdjacency()) || StringUtility.isEmpty(claim.getNorthAdjacencyTypeCode()))) {
+            if (throwException) {
+                throw new SOLAException(ServiceMessage.OT_WS_CLAIM_NORTH_ADJ_REQUIRED);
+            } else {
+                return false;
+            }
+        }
+        // South adjacency 
+        if (fullValidation && (StringUtility.isEmpty(claim.getSouthAdjacency()) || StringUtility.isEmpty(claim.getSouthAdjacencyTypeCode()))) {
+            if (throwException) {
+                throw new SOLAException(ServiceMessage.OT_WS_CLAIM_SOUTH_ADJ_REQUIRED);
+            } else {
+                return false;
+            }
+        }
+        // East adjacency 
+        if (fullValidation && (StringUtility.isEmpty(claim.getEastAdjacency()) || StringUtility.isEmpty(claim.getEastAdjacencyTypeCode()))) {
+            if (throwException) {
+                throw new SOLAException(ServiceMessage.OT_WS_CLAIM_EAST_ADJ_REQUIRED);
+            } else {
+                return false;
+            }
+        }
+        // West adjacency 
+        if (fullValidation && (StringUtility.isEmpty(claim.getWestAdjacency()) || StringUtility.isEmpty(claim.getWestAdjacencyTypeCode()))) {
+            if (throwException) {
+                throw new SOLAException(ServiceMessage.OT_WS_CLAIM_WEST_ADJ_REQUIRED);
             } else {
                 return false;
             }
