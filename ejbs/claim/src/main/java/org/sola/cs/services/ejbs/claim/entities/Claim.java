@@ -119,6 +119,8 @@ public class Claim extends AbstractVersionedEntity {
     private String communeCode;
     @Column(name = "plot_number")
     private String plotNumber;
+    @Column(name="area_gross")
+    private Double areaGross;
         
     public static final String PARAM_CHALLENGED_ID = "challengeId";
     public static final String PARAM_CLAIM_NUMBER = "claimNumber";
@@ -533,6 +535,14 @@ public class Claim extends AbstractVersionedEntity {
 
     public void setPlotNumber(String plotNumber) {
         this.plotNumber = plotNumber;
+    }
+
+    public Double getAreaGross() {
+        return areaGross;
+    }
+
+    public void setAreaGross(Double areaGross) {
+        this.areaGross = areaGross;
     }
 
     public boolean getIsReadyForReview() {
